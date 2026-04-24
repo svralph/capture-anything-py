@@ -1,0 +1,13 @@
+{
+  "module_name": "capture-anything-py",
+  "visibility": "public",
+  "namespace": "sab-viam",
+  "language": "python",
+  "resource_type": "service",
+  "resource_subtype": "generic",
+  "model_name": "metrics-capture",
+  "initialize_git": false,
+  "generator_version": "0.1.0",
+  "generated_on": "2026-04-24T18:49:58.060663Z",
+  "module_readme_link": "README.md"
+}
