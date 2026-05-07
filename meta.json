@@ -2,7 +2,7 @@
   "$schema": "https://dl.viam.dev/module.schema.json",
   "module_id": "sab-viam:capture-anything-py",
   "visibility": "public",
-  "url": "",
+  "url": "https://github.com/svralph/capture-anything-py",
   "description": "Modular generic service: metrics-capture",
   "models": [
     {
