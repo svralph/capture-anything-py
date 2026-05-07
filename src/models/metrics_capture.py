@@ -24,22 +24,16 @@ class MetricsCapture(Generic, EasyResource):
 
     data_client: Optional[DataClient] = None
     viam_client: Optional[ViamClient] = None
+    part_id: Optional[str] = None
 
     @classmethod
     def new(
         cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
     ) -> Self:
-        """This method creates a new instance of this Generic service.
-        The default implementation sets the name from the `config` parameter.
-
-        Args:
-            config (ComponentConfig): The configuration for this resource
-            dependencies (Mapping[ResourceName, ResourceBase]): The dependencies (both required and optional)
-
-        Returns:
-            Self: The resource
-        """
-        return super().new(config, dependencies)
+        self = super().new(config, dependencies)
+        fields = config.attributes.fields
+        self.part_id = fields["part_id"].string_value
+        return self
 
     @classmethod
     def validate_config(
@@ -56,6 +50,10 @@ class MetricsCapture(Generic, EasyResource):
                 first element is a list of required dependencies and the
                 second element is a list of optional dependencies
         """
+
+        fields = config.attributes.fields
+        if "part_id" not in fields or not fields["part_id"].string_value:
+            raise ValueError("missing required attribute 'part_id'")
         return [], []
 
     async def do_command(
@@ -75,7 +73,7 @@ class MetricsCapture(Generic, EasyResource):
         time_received = datetime(2026, 4, 24, 11, 0, 3)
 
         file_id = await self.data_client.tabular_data_capture_upload(
-            part_id="6847ee1a-46fe-4593-b891-78f455052b1c",
+            part_id=self.part_id,
             component_type='rdk:component:movement_sensor',
             component_name='my_movement_sensor',
             method_name='Readings',
