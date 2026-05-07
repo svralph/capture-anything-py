@@ -107,8 +107,8 @@ class MetricsCapture(Generic, EasyResource):
 
         readings = {}
         for item in tabular_data:
-            for key, value in item.keys():
-                readings[key] = value
+            for key in item.keys():
+                readings[key] = item[key]
         print(f"readings: {readings}")
 
         file_id = await self.data_client.tabular_data_capture_upload(
