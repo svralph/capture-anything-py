@@ -1,5 +1,4 @@
-from typing import ClassVar, Final, Mapping, Optional, Sequence, Tuple
-import os
+from typing import ClassVar, Mapping, Optional, Sequence, Tuple, Any, List
 
 from typing_extensions import Self
 from viam.proto.app.robot import ComponentConfig
@@ -13,6 +12,7 @@ from datetime import datetime
 
 from viam.app.data_client import DataClient
 from viam.app.viam_client import ViamClient
+from viam.robot.client import RobotClient
 
 
 class MetricsCapture(Generic, EasyResource):
@@ -63,31 +63,71 @@ class MetricsCapture(Generic, EasyResource):
         timeout: Optional[float] = None,
         **kwargs
     ) -> Mapping[str, ValueTypes]:
-    # Ensure there is only one viam_client connection
+        # Ensure there is only one viam_client connection
         if not self.viam_client:
             self.viam_client = await ViamClient.create_from_env_vars()
 
         self.data_client = self.viam_client.data_client
 
-        time_requested = datetime.now()
-        time_received = datetime.now()
+        robot = self.viam_client.robot
+        metadata = await robot.get_cloud_metadata()
+        part_id = metadata.robot_part_id
+
+        component_type = command.get("component_type")
+        component_name = command.get("component_name")
+        method_name = command.get("method_name")
+        tags = command.get("tags", [])
+        tabular_data = command.get("tabular_data")
+
+        if not isinstance(component_type, str) or not component_type:
+            raise ValueError("`component_type` must be a non-empty string")
+        if not isinstance(component_name, str) or not component_name:
+            raise ValueError("`component_name` must be a non-empty string")
+        if not isinstance(method_name, str) or not method_name:
+            raise ValueError("`method_name` must be a non-empty string")
+        if not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
+            raise ValueError("`tags` must be a list of strings")
+        if not isinstance(tabular_data, list) or len(tabular_data) == 0:
+            raise ValueError("`tabular_data` must be a non-empty list")
+
+        raw_data_request_times = command.get("data_request_times")
+        data_request_times: List[Tuple[datetime, datetime]] = []
+
+        if raw_data_request_times is None:
+            now = datetime.now()
+            data_request_times = [(now, now)] * len(tabular_data)
+        else:
+            if not isinstance(raw_data_request_times, list):
+                raise ValueError("`data_request_times` must be a list")
+            for item in raw_data_request_times:
+                if (
+                    not isinstance(item, list)
+                    and not isinstance(item, tuple)
+                ) or len(item) != 2:
+                    raise ValueError(
+                        "`data_request_times` must be a list of [requested_time, received_time]"
+                    )
+                requested_time_raw, received_time_raw = item
+                if not isinstance(requested_time_raw, str) or not isinstance(received_time_raw, str):
+                    raise ValueError("timestamps in `data_request_times` must be ISO 8601 strings")
+                data_request_times.append(
+                    (
+                        datetime.fromisoformat(requested_time_raw.replace("Z", "+00:00")),
+                        datetime.fromisoformat(received_time_raw.replace("Z", "+00:00")),
+                    )
+                )
 
         file_id = await self.data_client.tabular_data_capture_upload(
             part_id=self.part_id,
-            component_type='rdk:component:movement_sensor',
-            component_name='my_movement_sensor',
-            method_name='Readings',
-            tags=["metrics_data"],
-            data_request_times=[(time_requested, time_received)],
-            tabular_data=[{
-                'readings': {
-                    'linear_velocity': {'x': 0.5, 'y': 0.0, 'z': 0.0},
-                    'angular_velocity': {'x': 0.0, 'y': 0.0, 'z': 0.1}
-                }
-            }]
+            component_type=component_type,
+            component_name=component_name,
+            method_name=method_name,
+            tags=tags,
+            data_request_times=data_request_times,
+            tabular_data=tabular_data,
         )
 
-        return {file_id: file_id}
+        return {"file_id": file_id}
 
     async def get_status(
         self, *, timeout: Optional[float] = None, **kwargs
