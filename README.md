@@ -10,7 +10,7 @@ This module provides the following model(s):
 
 ## Module configuration
 
-This model expects a `part_id` attribute in resource configuration.
+This model does not require a `part_id` attribute. It automatically retrieves `robot_part_id` from Viam cloud metadata at runtime.
 
 Example resource config:
 
@@ -18,10 +18,7 @@ Example resource config:
 {
   "name": "metrics-capture-1",
   "api": "rdk:service:generic",
-  "model": "sab-viam:capture-anything-py:metrics-capture",
-  "attributes": {
-    "part_id": "6847ee1a-46fe-4593-b891-78f455052b1c"
-  }
+  "model": "sab-viam:capture-anything-py:metrics-capture"
 }
 ```
 
@@ -63,27 +60,45 @@ Example `DoCommand` payload:
 }
 ```
 
-## Example caller usage (Python)
+Empty template:
+
+```json
+{
+  "component_type": "",
+  "component_name": "",
+  "method_name": "",
+  "tags": [],
+  "data_request_times": [
+    ["", ""]
+  ],
+  "tabular_data": [
+    {
+      "readings": {}
+    }
+  ]
+}
+```
+
+## Example caller usage from another Viam module (Python)
 
 ```python
-payload = {
-    "component_type": "rdk:component:movement_sensor",
-    "component_name": "my_movement_sensor",
+from datetime import datetime, timezone
+
+# Example: your module already has a movement sensor client and a reference
+# to this metrics-capture generic service.
+readings = await movement_sensor.get_readings()
+requested = datetime.now(timezone.utc)
+received = datetime.now(timezone.utc)
+
+upload_payload = {
+    "component_type": movement_sensor.get_resource_name().resource_namespace,
+    "component_name": movement_sensor.get_resource_name().name,
     "method_name": "Readings",
-    "tags": ["metrics_data"],
-    "data_request_times": [
-        ["2026-05-07T17:00:00Z", "2026-05-07T17:00:01Z"]
-    ],
-    "tabular_data": [
-        {
-            "readings": {
-                "linear_velocity": {"x": 0.5, "y": 0.0, "z": 0.0},
-                "angular_velocity": {"x": 0.0, "y": 0.0, "z": 0.1}
-            }
-        }
-    ]
+    "tags": ["metrics_data", "from_my_module"],
+    "data_request_times": [[requested.isoformat(), received.isoformat()]],
+    "tabular_data": [{"readings": readings}],
 }
 
-result = await metrics_capture_service.do_command(payload)
+result = await metrics_capture_service.do_command(upload_payload)
 file_id = result["file_id"]
 ```

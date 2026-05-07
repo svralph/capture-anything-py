@@ -31,8 +31,6 @@ class MetricsCapture(Generic, EasyResource):
         cls, config: ComponentConfig, dependencies: Mapping[ResourceName, ResourceBase]
     ) -> Self:
         self = super().new(config, dependencies)
-        fields = config.attributes.fields
-        self.part_id = fields["part_id"].string_value
         return self
 
     @classmethod
@@ -51,9 +49,6 @@ class MetricsCapture(Generic, EasyResource):
                 second element is a list of optional dependencies
         """
 
-        fields = config.attributes.fields
-        if "part_id" not in fields or not fields["part_id"].string_value:
-            raise ValueError("missing required attribute 'part_id'")
         return [], []
 
     async def do_command(
@@ -118,7 +113,7 @@ class MetricsCapture(Generic, EasyResource):
                 )
 
         file_id = await self.data_client.tabular_data_capture_upload(
-            part_id=self.part_id,
+            part_id=part_id,
             component_type=component_type,
             component_name=component_name,
             method_name=method_name,
