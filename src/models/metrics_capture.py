@@ -1,3 +1,5 @@
+import os
+
 from typing import ClassVar, Mapping, Optional, Sequence, Tuple, Any, List
 
 from typing_extensions import Self
@@ -24,7 +26,6 @@ class MetricsCapture(Generic, EasyResource):
 
     data_client: Optional[DataClient] = None
     viam_client: Optional[ViamClient] = None
-    part_id: Optional[str] = None
 
     @classmethod
     def new(
@@ -64,9 +65,7 @@ class MetricsCapture(Generic, EasyResource):
 
         self.data_client = self.viam_client.data_client
 
-        robot = self.viam_client.robot
-        metadata = await robot.get_cloud_metadata()
-        part_id = metadata.robot_part_id
+        part_id = os.environ.get("VIAM_MACHINE_PART_ID")
 
         component_type = command.get("component_type")
         component_name = command.get("component_name")
