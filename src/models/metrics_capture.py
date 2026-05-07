@@ -105,6 +105,12 @@ class MetricsCapture(Generic, EasyResource):
                     )
                 )
 
+        readings = {}
+        for item in tabular_data:
+            for key in item.keys:
+                readings[key] = item[key]
+        print(f"readings: {readings}")
+
         file_id = await self.data_client.tabular_data_capture_upload(
             part_id=part_id,
             component_type="rdk:component:sensor",
@@ -112,7 +118,7 @@ class MetricsCapture(Generic, EasyResource):
             method_name="Readings",
             tags=tags,
             data_request_times=data_request_times,
-            tabular_data=tabular_data,
+            tabular_data={"readings": readings},
         )
 
         return {"file_id": file_id}
