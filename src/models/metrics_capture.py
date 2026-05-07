@@ -67,18 +67,12 @@ class MetricsCapture(Generic, EasyResource):
 
         part_id = os.environ.get("VIAM_MACHINE_PART_ID")
 
-        component_type = command.get("component_type")
         component_name = command.get("component_name")
-        method_name = command.get("method_name")
         tags = command.get("tags", [])
         tabular_data = command.get("tabular_data")
 
-        if not isinstance(component_type, str) or not component_type:
-            raise ValueError("`component_type` must be a non-empty string")
         if not isinstance(component_name, str) or not component_name:
             raise ValueError("`component_name` must be a non-empty string")
-        if not isinstance(method_name, str) or not method_name:
-            raise ValueError("`method_name` must be a non-empty string")
         if not isinstance(tags, list) or any(not isinstance(tag, str) for tag in tags):
             raise ValueError("`tags` must be a list of strings")
         if not isinstance(tabular_data, list) or len(tabular_data) == 0:
@@ -113,9 +107,9 @@ class MetricsCapture(Generic, EasyResource):
 
         file_id = await self.data_client.tabular_data_capture_upload(
             part_id=part_id,
-            component_type=component_type,
+            component_type="rdk:component:sensor",
             component_name=component_name,
-            method_name=method_name,
+            method_name="Readings",
             tags=tags,
             data_request_times=data_request_times,
             tabular_data=tabular_data,
