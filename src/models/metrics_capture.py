@@ -69,8 +69,8 @@ class MetricsCapture(Generic, EasyResource):
 
         self.data_client = self.viam_client.data_client
 
-        time_requested = datetime(2026, 4, 24, 11, 0, 0)
-        time_received = datetime(2026, 4, 24, 11, 0, 3)
+        time_requested = datetime.now()
+        time_received = datetime.now()
 
         file_id = await self.data_client.tabular_data_capture_upload(
             part_id=self.part_id,
