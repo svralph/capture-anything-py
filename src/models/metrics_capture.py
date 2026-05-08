@@ -82,11 +82,12 @@ class MetricsCapture(Generic, EasyResource):
         data_request_times: List[Tuple[datetime, datetime]] = []
 
         if raw_data_request_times is None:
-            now = datetime.now()
+            now = datetime.now().astimezone()
             data_request_times = [(now, now)] * len(tabular_data)
         else:
             if not isinstance(raw_data_request_times, list):
                 raise ValueError("`data_request_times` must be a list")
+            local_tz = datetime.now().astimezone().tzinfo
             for item in raw_data_request_times:
                 if (
                     not isinstance(item, list)
@@ -100,8 +101,8 @@ class MetricsCapture(Generic, EasyResource):
                     raise ValueError("timestamps in `data_request_times` must be ISO 8601 strings")
                 data_request_times.append(
                     (
-                        datetime.fromisoformat(requested_time_raw.replace("Z", "+00:00")),
-                        datetime.fromisoformat(received_time_raw.replace("Z", "+00:00")),
+                        datetime.fromisoformat(requested_time_raw.replace("Z", "+00:00")).astimezone(local_tz),
+                        datetime.fromisoformat(received_time_raw.replace("Z", "+00:00")).astimezone(local_tz),
                     )
                 )
 
