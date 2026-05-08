@@ -118,7 +118,7 @@ class MetricsCapture(Generic, EasyResource):
             method_name="Readings",
             tags=tags,
             data_request_times=data_request_times,
-            tabular_data={"readings": readings},
+            tabular_data=[{"readings": readings}]
         )
 
         return {"file_id": file_id}
